@@ -198,7 +198,18 @@ namespace NzbDrone.Common.Disk
                 throw new FileNotFoundException("File doesn't exist: " + path);
             }
 
-            var fi = _fileSystem.FileInfo.FromFileName(path);
+            var fi = new FileInfo(path);
+
+            // If the file is a symlink, resolve the target path and get the size of the target file.
+            if (fi.Attributes.HasFlag(FileAttributes.ReparsePoint))
+            {
+                var targetPath = fi.ResolveLinkTarget(true)?.FullName;
+
+                if (targetPath != null)
+                {
+                    fi = new FileInfo(targetPath);
+                }
+            }
             return fi.Length;
         }
 
